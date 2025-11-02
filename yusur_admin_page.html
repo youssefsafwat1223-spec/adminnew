@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام يُسر - لوحة تحكم الإدارة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #f3f4f6;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-right: 5px solid;
+        }
+
+        .stat-card.total {
+            border-right-color: #3b82f6;
+        }
+
+        .stat-card.pending {
+            border-right-color: #f59e0b;
+        }
+
+        .stat-card.approved {
+            border-right-color: #10b981;
+        }
+
+        .stat-card.rejected {
+            border-right-color: #ef4444;
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-group select {
+            padding: 10px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .refresh-btn, .export-btn {
+            padding: 10px 20px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .export-btn {
+            background: #10b981;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f9fafb;
+            padding: 15px;
+            text-align: right;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge.approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge.rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 5px;
+            font-weight: 600;
+        }
+
+        .btn-view {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-approve {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-reject {
+            background: #ef4444;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 25px;
+            border-bottom: 2px solid #f3f4f6;
+        }
+
+        .modal-header h2 {
+            font-size: 22px;
+            color: #1f2937;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .detail-row {
+            margin-bottom: 20px;
+        }
+
+        .detail-row label {
+            display: block;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .detail-row .value {
+            color: #1f2937;
+            font-size: 15px;
+        }
+
+        .response-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .response-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 2px solid #f3f4f6;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .modal-btn.cancel {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .modal-btn.confirm {
+            color: white;
+        }
+
+        .modal-btn.confirm.approve {
+            background: #10b981;
+        }
+
+        .modal-btn.confirm.reject {
+            background: #ef4444;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f4f6;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+
+            .action-btn {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏫 نظام يُسر - لوحة تحكم الإدارة</h1>
+        <p>إدارة طلبات الاستئذان</p>
+    </div>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <h3>📊 إجمالي الطلبات</h3>
+                <div class="number" id="totalRequests">0</div>
+            </div>
+            <div class="stat-card pending">
+                <h3>⏳ قيد المراجعة</h3>
+                <div class="number" id="pendingRequests">0</div>
+            </div>
+            <div class="stat-card approved">
+                <h3>✅ مقبولة</h3>
+                <div class="number" id="approvedRequests">0</div>
+            </div>
+            <div class="stat-card rejected">
+                <h3>❌ مرفوضة</h3>
+                <div class="number" id="rejectedRequests">0</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 بحث بالاسم، رقم الهاتف، أو السجل المدني...">
+            </div>
+            <div class="filter-group">
+                <select id="statusFilter">
+                    <option value="all">كل الحالات</option>
+                    <option value="Pending">قيد المراجعة</option>
+                    <option value="Approved">مقبولة</option>
+                    <option value="Rejected">مرفوضة</option>
+                </select>
+                <select id="gradeFilter">
+                    <option value="all">كل الصفوف</option>
+                    <option value="الأول الثانوي">الأول الثانوي</option>
+                    <option value="الثاني الثانوي">الثاني الثانوي</option>
+                    <option value="الثالث الثانوي">الثالث الثانوي</option>
+                </select>
+            </div>
+            <button class="refresh-btn" onclick="loadRequests()">🔄 تحديث</button>
+            <button class="export-btn" onclick="exportToExcel()">📥 تصدير Excel</button>
+        </div>
+
+        <div class="table-container">
+            <div id="loadingSpinner" class="loading-spinner">
+                <div class="spinner"></div>
+                <p>جاري التحميل...</p>
+            </div>
+
+            <div id="tableContent" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>اسم الطالبة</th>
+                            <th>رقم الهاتف</th>
+                            <th>السجل المدني</th>
+                            <th>الصف</th>
+                            <th>الفصل</th>
+                            <th>تاريخ الاستئذان</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requestsTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <h3>لا توجد طلبات</h3>
+                <p>لم يتم تقديم أي طلبات حتى الآن</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for View/Approve/Reject -->
+    <div id="actionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle"></h2>
+            </div>
+            <div class="modal-body">
+                <div class="detail-row">
+                    <label>اسم الطالبة</label>
+                    <div class="value" id="modalStudentName"></div>
+                </div>
+                <div class="detail-row">
+                    <label>رقم الهاتف</label>
+                    <div class="value" id="modalPhone"></div>
+                </div>
+                <div class="detail-row">
+                    <label>رقم السجل المدني</label>
+                    <div class="value" id="modalCivilId"></div>
+                </div>
+                <div class="detail-row">
+                    <label>الصف والفصل</label>
+                    <div class="value" id="modalGradeClass"></div>
+                </div>
+                <div class="detail-row">
+                    <label>سبب الاستئذان</label>
+                    <div class="value" id="modalReason"></div>
+                </div>
+                <div class="detail-row">
+                    <label>تاريخ الاستئذان</label>
+                    <div class="value" id="modalDate"></div>
+                </div>
+                <div class="detail-row">
+                    <label>تاريخ تقديم الطلب</label>
+                    <div class="value" id="modalRequestDate"></div>
+                </div>
+                <div class="detail-row" id="responseSection" style="display: none;">
+                    <label>سبب الموافقة/الرفض *</label>
+                    <textarea id="adminResponse" class="response-textarea" placeholder="اكتبي سبب القرار (سيُرسل للطالبة عبر WhatsApp)" required></textarea>
+                    <small style="color: #6b7280; font-size: 12px; margin-top: 5px; display: block;">
+                        هذا السبب سيُرسل للطالبة عبر رسالة WhatsApp
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" onclick="closeModal()">إلغاء</button>
+                <button class="modal-btn confirm" id="confirmBtn" style="display: none;" onclick="confirmAction()"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Google Apps Script Web App URL - ضع الرابط هنا
+        const SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+        
+        let allRequests = [];
+        let currentRequest = null;
+        let currentAction = null;
+
+        // Load requests on page load
+        window.addEventListener('load', () => {
+            loadRequests();
+        });
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', filterTable);
+        document.getElementById('statusFilter').addEventListener('change', filterTable);
+        document.getElementById('gradeFilter').addEventListener('change', filterTable);
+
+        async function loadRequests() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('tableContent').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'none';
+
+            try {
+                // Fetch data from Google Sheets
+                const response = await fetch(SCRIPT_URL + '?action=getAll');
+                const data = await response.json();
+                
+                allRequests = data.requests || [];
+                updateStats();
+                renderTable(allRequests);
+
+            } catch (error) {
+                console.error('Error loading requests:', error);
+                // Show mock data for testing
+                allRequests = getMockData();
+                updateStats();
+                renderTable(allRequests);
+            }
+
+            document.getElementById('loadingSpinner').style.display = 'none';
+        }
+
+        function updateStats() {
+            const total = allRequests.length;
+            const pending = allRequests.filter(r => r.status === 'Pending').length;
+            const approved = allRequests.filter(r => r.status === 'Approved').length;
+            const rejected = allRequests.filter(r => r.status === 'Rejected').length;
+
+            document.getElementById('totalRequests').textContent = total;
+            document.getElementById('pendingRequests').textContent = pending;
+            document.getElementById('approvedRequests').textContent = approved;
+            document.getElementById('rejectedRequests').textContent = rejected;
+        }
+
+        function renderTable(requests) {
+            const tbody = document.getElementById('requestsTableBody');
+            tbody.innerHTML = '';
+
+            if (requests.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('tableContent').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('tableContent').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+
+            requests.forEach((request, index) => {
+                const row = document.createElement('tr');
+                
+                const statusBadge = `<span class="badge ${request.status.toLowerCase()}">${getStatusText(request.status)}</span>`;
+                
+                const actions = request.status === 'Pending' 
+                    ? `
+                        <button class="action-btn btn-view" onclick="viewRequest(${index})">👁️ عرض</button>
+                        <button class="action-btn btn-approve" onclick="openApproveModal(${index})">✅ موافقة</button>
+                        <button class="action-btn btn-reject" onclick="openRejectModal(${index})">❌ رفض</button>
+                    `
+                    : `
+                        <button class="action-btn btn-view" onclick="viewRequest(${index})">👁️ عرض</button>
+                    `;
+
+                row.innerHTML = `
+                    <td>${request.id}</td>
+                    <td>${request.studentName}</td>
+                    <td>${request.fullPhone}</td>
+                    <td>${request.civilId}</td>
+                    <td>${request.grade}</td>
+                    <td>${request.class}</td>
+                    <td>${new Date(request.excuseDate).toLocaleDateString('ar-EG')}</td>
+                    <td>${statusBadge}</td>
+                    <td>${actions}</td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterTable() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const gradeFilter = document.getElementById('gradeFilter').value;
+
+            const filtered = allRequests.filter(request => {
+                const matchesSearch = 
+                    request.studentName.toLowerCase().includes(searchTerm) ||
+                    request.fullPhone.includes(searchTerm) ||
+                    request.civilId.includes(searchTerm);
+
+                const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
+                const matchesGrade = gradeFilter === 'all' || request.grade === gradeFilter;
+
+                return matchesSearch && matchesStatus && matchesGrade;
+            });
+
+            renderTable(filtered);
+        }
+
+        function viewRequest(index) {
+            const request = allRequests[index];
+            currentRequest = request;
+            
+            document.getElementById('modalTitle').textContent = 'تفاصيل الطلب #' + request.id;
+            fillModalData(request);
+            
+            document.getElementById('responseSection').style.display = 'none';
+            document.getElementById('confirmBtn').style.display = 'none';
+            
+            document.getElementById('actionModal').classList.add('show');
+        }
+
+        function openApproveModal(index) {
+            const request = allRequests[index];
+            currentRequest = request;
+            currentAction = 'approve';
+            
+            document.getElementById('modalTitle').textContent = '✅ الموافقة على الطلب #' + request.id;
+            fillModalData(request);
+            
+            document.getElementById('responseSection').style.display = 'block';
+            document.getElementById('adminResponse').value = '';
+            document.getElementById('adminResponse').placeholder = 'مثال: تمت الموافقة على طلبك. نتمنى لك التوفيق.';
+            
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.style.display = 'block';
+            confirmBtn.textContent = 'تأكيد الموافقة';
+            confirmBtn.className = 'modal-btn confirm approve';
+            
+            document.getElementById('actionModal').classList.add('show');
+        }
+
+        function openRejectModal(index) {
+            const request = allRequests[index];
+            currentRequest = request;
+            currentAction = 'reject';
+            
+            document.getElementById('modalTitle').textContent = '❌ رفض الطلب #' + request.id;
+            fillModalData(request);
+            
+            document.getElementById('responseSection').style.display = 'block';
+            document.getElementById('adminResponse').value = '';
+            document.getElementById('adminResponse').placeholder = 'مثال: عذراً، لا يمكن الموافقة على الطلب في هذا التاريخ.';
+            
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.style.display = 'block';
+            confirmBtn.textContent = 'تأكيد الرفض';
+            confirmBtn.className = 'modal-btn confirm reject';
+            
+            document.getElementById('actionModal').classList.add('show');
+        }
+
+        function fillModalData(request) {
+            document.getElementById('modalStudentName').textContent = request.studentName;
+            document.getElementById('modalPhone').textContent = request.fullPhone;
+            document.getElementById('modalCivilId').textContent = request.civilId;
+            document.getElementById('modalGradeClass').textContent = `${request.grade} - ${request.class}`;
+            document.getElementById('modalReason').textContent = request.reason;
+            document.getElementById('modalDate').textContent = new Date(request.excuseDate).toLocaleDateString('ar-EG');
+            document.getElementById('modalRequestDate').textContent = new Date(request.requestDate).toLocaleString('ar-EG');
+        }
+
+        async function confirmAction() {
+            const adminResponse = document.getElementById('adminResponse').value.trim();
+            
+            if (adminResponse.length < 5) {
+                alert('يرجى كتابة سبب القرار (5 أحرف على الأقل)');
+                return;
+            }
+
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'جاري الحفظ...';
+
+            try {
+                const updateData = {
+                    action: 'update',
+                    id: currentRequest.id,
+                    status: currentAction === 'approve' ? 'Approved' : 'Rejected',
+                    adminResponse: adminResponse,
+                    responseDate: new Date().toISOString()
+                };
+
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                alert('تم تحديث حالة الطلب وسيتم إرسال الإشعار للطالبة');
+                closeModal();
+                loadRequests();
+
+            } catch (error) {
+                alert('حدث خطأ في التحديث');
+                console.error('Error:', error);
+            } finally {
+                confirmBtn.disabled = false;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('actionModal').classList.remove('show');
+            document.getElementById('adminResponse').value = '';
+            currentRequest = null;
+            currentAction = null;
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'Pending': 'قيد المراجعة',
+                'Approved': 'مقبولة',
+                'Rejected': 'مرفوضة'
+            };
+            return statusMap[status] || status;
+        }
+
+        function exportToExcel() {
+            // Get filtered data
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const gradeFilter = document.getElementById('gradeFilter').value;
+
+            const filtered = allRequests.filter(request => {
+                const matchesSearch = 
+                    request.studentName.toLowerCase().includes(searchTerm) ||
+                    request.fullPhone.includes(searchTerm) ||
+                    request.civilId.includes(searchTerm);
+
+                const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
+                const matchesGrade = gradeFilter === 'all' || request.grade === gradeFilter;
+
+                return matchesSearch && matchesStatus && matchesGrade;
+            });
+
+            // Create CSV content
+            let csv = 'رقم الطلب,اسم الطالبة,رقم الهاتف,السجل المدني,الصف,الفصل,سبب الاستئذان,تاريخ الاستئذان,تاريخ الطلب,الحالة,رد الإدارة\n';
+            
+            filtered.forEach(request => {
+                csv += `${request.id},"${request.studentName}",${request.fullPhone},${request.civilId},"${request.grade}","${request.class}","${request.reason}",${request.excuseDate},${request.requestDate},"${getStatusText(request.status)}","${request.adminResponse || ''}"\n`;
+            });
+
+            // Download
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `yusur_requests_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        // Mock data for testing
+        function getMockData() {
+            return [
+                {
+                    id: 1,
+                    studentName: 'نورة أحمد العتيبي',
+                    countryCode: '+966',
+                    phoneNumber: '501234567',
+                    fullPhone: '+966501234567',
+                    civilId: '1234567890',
+                    grade: 'الثالث الثانوي',
+                    class: 'فصل 1',
+                    reason: 'موعد طبي في المستشفى',
+                    excuseDate: '2025-11-05',
+                    requestDate: '2025-11-02T10:30:00',
+                    status: 'Pending',
+                    adminResponse: null
+                },
+                {
+                    id: 2,
+                    studentName: 'مريم خالد الشمري',
+                    countryCode: '+966',
+                    phoneNumber: '507654321',
+                    fullPhone: '+966507654321',
+                    civilId: '2345678901',
+                    grade: 'الثاني الثانوي',
+                    class: 'فصل 2',
+                    reason: 'مراجعة أوراق رسمية',
+                    excuseDate: '2025-11-03',
+                    requestDate: '2025-11-01T14:20:00',
+                    status: 'Approved',
+                    adminResponse: 'تمت الموافقة. نتمنى لك التوفيق.'
+                },
+                {
+                    id: 3,
+                    studentName: 'لمى سعود القحطاني',
+                    countryCode: '+966',
+                    phoneNumber: '509876543',
+                    fullPhone: '+966509876543',
+                    civilId: '3456789012',
+                    grade: 'الأول الثانوي',
+                    class: 'فصل 3',
+                    reason: 'ظرف عائلي طارئ',
+                    excuseDate: '2025-11-04',
+                    requestDate: '2025-11-02T09:15:00',
+                    status: 'Rejected',
+                    adminResponse: 'عذراً، لا يمكن الموافقة في هذا التاريخ بسبب الاختبارات.'
+                }
+            ];
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('actionModal').addEventListener('click', (e) => {
+            if (e.target.id === 'actionModal') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
